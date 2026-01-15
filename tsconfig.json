@@ -1,0 +1,27 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM"],
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"outDir": "./dist",
+		"rootDir": ".",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true
+	},
+	"include": [
+		"credentials/**/*.ts",
+		"nodes/**/*.ts",
+		"index.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
+}

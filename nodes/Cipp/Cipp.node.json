@@ -1,0 +1,22 @@
+{
+	"node": "n8n-nodes-cipp.cippApp",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Productivity", "Development"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://docs.cipp.app/api-documentation/setup-and-authentication"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://docs.cipp.app/api-documentation/endpoints/"
+			}
+		]
+	},
+	"alias": ["microsoft 365", "m365", "azure", "intune", "msp", "multi-tenant"],
+	"subcategories": {
+		"Productivity": ["IT Management"]
+	}
+}

@@ -1,0 +1,68 @@
+{
+  "name": "@joshuanode/n8n-nodes-cipp",
+  "version": "0.0.6",
+  "description": "n8n community node for CIPP.app - Microsoft 365 multi-tenant management",
+  "license": "MIT",
+  "keywords": [
+    "n8n-community-node-package",
+    "cipp",
+    "microsoft-365",
+    "m365",
+    "msp",
+    "multi-tenant",
+    "azure-ad",
+    "intune",
+    "exchange"
+  ],
+  "homepage": "https://github.com/ajoshuasmith/n8n-nodes-cipp",
+  "author": {
+    "name": "Joshua",
+    "email": "ajoshuasmith@users.noreply.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajoshuasmith/n8n-nodes-cipp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ajoshuasmith/n8n-nodes-cipp/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "build": "n8n-node build && cp nodes/Cipp/*.png dist/nodes/Cipp/ && cp credentials/*.png dist/credentials/",
+    "build:watch": "tsc --watch",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "release": "n8n-node release"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "strict": false,
+    "credentials": [
+      "dist/credentials/CippApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Cipp/Cipp.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "*",
+    "eslint": "9.32.0",
+    "n8n-workflow": "*",
+    "prettier": "3.6.2",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
