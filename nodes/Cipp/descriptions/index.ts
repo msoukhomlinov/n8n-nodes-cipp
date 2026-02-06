@@ -14,8 +14,13 @@ import {
 	deviceFields,
 	deviceOperations,
 } from './DeviceDescription';
+import { gdapFields, gdapOperations } from './GdapDescription';
 import { groupFields, groupOperations } from './GroupDescription';
+import { identityFields, identityOperations } from './IdentityDescription';
 import { mailboxFields, mailboxOperations } from './MailboxDescription';
+import { onedriveFields, onedriveOperations } from './OneDriveDescription';
+import { policyFields, policyOperations } from './PolicyDescription';
+import { quarantineFields, quarantineOperations } from './QuarantineDescription';
 import { teamFields, teamOperations, voiceFields, voiceOperations } from './TeamDescription';
 import { tenantFields, tenantOperations } from './TenantDescription';
 import { userFields, userOperations } from './UserDescription';
@@ -26,8 +31,13 @@ export const operationFields = [
 	...autopilotOperations,
 	...backupOperations,
 	...deviceOperations,
+	...gdapOperations,
 	...groupOperations,
+	...identityOperations,
 	...mailboxOperations,
+	...onedriveOperations,
+	...policyOperations,
+	...quarantineOperations,
 	...scheduledItemOperations,
 	...teamOperations,
 	...tenantOperations,
@@ -42,8 +52,13 @@ export const resourceFields = [
 	...autopilotFields,
 	...backupFields,
 	...deviceFields,
+	...gdapFields,
 	...groupFields,
+	...identityFields,
 	...mailboxFields,
+	...onedriveFields,
+	...policyFields,
+	...quarantineFields,
 	...scheduledItemFields,
 	...teamFields,
 	...tenantFields,

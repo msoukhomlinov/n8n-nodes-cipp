@@ -25,6 +25,12 @@ export const teamOperations: INodeProperties[] = [
 				action: 'Add share point site',
 			},
 			{
+				name: 'Add Sites Bulk',
+				value: 'addSitesBulk',
+				description: 'Create multiple SharePoint sites from a list',
+				action: 'Add sites bulk',
+			},
+			{
 				name: 'Get Activity',
 				value: 'getActivity',
 				description: 'Get Teams user activity',
@@ -346,6 +352,22 @@ export const teamFields: INodeProperties[] = [
 		},
 		default: false,
 		description: 'Whether to remove (true) or add (false) the permission',
+	},
+
+	// Add Sites Bulk field
+	{
+		displayName: 'Sites Configuration',
+		name: 'sitesConfig',
+		type: 'json',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['team'],
+				operation: ['addSitesBulk'],
+			},
+		},
+		default: '[]',
+		description: 'JSON array of site configurations to create in bulk',
 	},
 ];
 

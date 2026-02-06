@@ -37,16 +37,52 @@ export const userOperations: INodeProperties[] = [
 				action: 'Disable a user',
 			},
 			{
+				name: 'Dismiss Risky User',
+				value: 'dismissRiskyUser',
+				description: 'Dismiss a risky user after investigation',
+				action: 'Dismiss risky user',
+			},
+			{
 				name: 'Enable',
 				value: 'enable',
 				description: 'Unblock sign-in for a user',
 				action: 'Enable a user',
 			},
 			{
+				name: 'Execute JIT Admin',
+				value: 'execJitAdmin',
+				description: 'Request just-in-time admin access',
+				action: 'Execute JIT admin',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get a list of users',
 				action: 'Get many users',
+			},
+			{
+				name: 'List Inactive Accounts',
+				value: 'listInactiveAccounts',
+				description: 'List accounts with no recent sign-in activity',
+				action: 'List inactive accounts',
+			},
+			{
+				name: 'List JIT Admin',
+				value: 'listJitAdmin',
+				description: 'List just-in-time admin requests',
+				action: 'List JIT admin',
+			},
+			{
+				name: 'List MFA Users',
+				value: 'listMfaUsers',
+				description: 'List users with their MFA status',
+				action: 'List MFA users',
+			},
+			{
+				name: 'List Sign-Ins',
+				value: 'listSignIns',
+				description: 'List user sign-in events for security monitoring',
+				action: 'List sign-ins',
 			},
 			{
 				name: 'Offboard',
@@ -137,7 +173,7 @@ export const userFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['user'],
-				operation: ['getAll'],
+				operation: ['getAll', 'listInactiveAccounts', 'listSignIns', 'listMfaUsers', 'listJitAdmin'],
 			},
 		},
 		default: false,
@@ -150,7 +186,7 @@ export const userFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['user'],
-				operation: ['getAll'],
+				operation: ['getAll', 'listInactiveAccounts', 'listSignIns', 'listMfaUsers', 'listJitAdmin'],
 				returnAll: [false],
 			},
 		},
@@ -173,7 +209,9 @@ export const userFields: INodeProperties[] = [
 				resource: ['user'],
 				operation: [
 					'disable',
+					'dismissRiskyUser',
 					'enable',
+					'execJitAdmin',
 					'resetMfa',
 					'resetPassword',
 					'revokeSessions',
@@ -208,6 +246,23 @@ export const userFields: INodeProperties[] = [
 		],
 		default: 'Enforced',
 		description: 'The MFA state to set for the user',
+	},
+
+	// JIT Admin role
+	{
+		displayName: 'JIT Admin Role',
+		name: 'jitAdminRole',
+		type: 'string',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['user'],
+				operation: ['execJitAdmin'],
+			},
+		},
+		default: '',
+		placeholder: 'e.g. Global Administrator',
+		description: 'The admin role to request for just-in-time access',
 	},
 
 	// Reset Password options

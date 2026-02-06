@@ -42,6 +42,18 @@ export const tenantOperations: INodeProperties[] = [
 				description: 'Get a list of many managed tenants',
 				action: 'Get many tenants',
 			},
+			{
+				name: 'List CSP SKUs',
+				value: 'listCspSkus',
+				description: 'List available CSP license SKUs catalog',
+				action: 'List CSP SKUs',
+			},
+			{
+				name: 'List Defender State',
+				value: 'listDefenderState',
+				description: 'Get Defender security posture for a tenant',
+				action: 'List Defender state',
+			},
 		],
 		default: 'getAll',
 	},
@@ -59,7 +71,7 @@ export const tenantFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['tenant'],
-				operation: ['getLicenses', 'getCspLicenses', 'cspLicenseAction'],
+				operation: ['getLicenses', 'getCspLicenses', 'cspLicenseAction', 'listDefenderState', 'listCspSkus'],
 			},
 		},
 		modes: [
@@ -89,7 +101,7 @@ export const tenantFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['tenant'],
-				operation: ['getAll', 'getLicenses', 'getCspLicenses'],
+				operation: ['getAll', 'getLicenses', 'getCspLicenses', 'listDefenderState', 'listCspSkus'],
 			},
 		},
 		default: false,
@@ -102,7 +114,7 @@ export const tenantFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['tenant'],
-				operation: ['getAll', 'getLicenses', 'getCspLicenses'],
+				operation: ['getAll', 'getLicenses', 'getCspLicenses', 'listDefenderState', 'listCspSkus'],
 				returnAll: [false],
 			},
 		},

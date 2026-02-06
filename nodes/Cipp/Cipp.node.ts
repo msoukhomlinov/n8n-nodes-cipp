@@ -73,14 +73,39 @@ export class Cipp implements INodeType {
 						description: 'Manage Intune devices',
 					},
 					{
+						name: 'GDAP',
+						value: 'gdap',
+						description: 'Manage GDAP partner relationships',
+					},
+					{
 						name: 'Group',
 						value: 'group',
 						description: 'Manage Azure AD groups',
 					},
 					{
+						name: 'Identity',
+						value: 'identity',
+						description: 'Manage audit logs, roles, and deleted items',
+					},
+					{
 						name: 'Mailbox',
 						value: 'mailbox',
 						description: 'Manage Exchange mailboxes',
+					},
+					{
+						name: 'OneDrive',
+						value: 'onedrive',
+						description: 'Provision and manage OneDrive',
+					},
+					{
+						name: 'Policy',
+						value: 'policy',
+						description: 'Manage Intune policies and Defender TVM',
+					},
+					{
+						name: 'Quarantine',
+						value: 'quarantine',
+						description: 'Manage quarantined email messages',
 					},
 					{
 						name: 'Scheduled Item',
@@ -318,6 +343,38 @@ export class Cipp implements INodeType {
 							},
 							{},
 						);
+					} else if (operation === 'listDefenderState') {
+						const tenantFilter = getTenantFilter();
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListDefenderState',
+							{},
+							{ tenantFilter },
+						);
+
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'listCspSkus') {
+						const tenantFilter = getTenantFilter();
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListCSPSKUs',
+							{},
+							{ tenantFilter },
+						);
+
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
 					}
 				}
 
@@ -502,6 +559,84 @@ export class Cipp implements INodeType {
 								tenantFilter,
 								user: JSON.parse(users),
 								Scheduled: { enabled: scheduled },
+							},
+							{},
+						);
+					} else if (operation === 'listInactiveAccounts') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListInactiveAccounts',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'listSignIns') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListSignIns',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'listMfaUsers') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListMFAUsers',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'dismissRiskyUser') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecDismissRiskyUser',
+							{
+								tenantFilter,
+								ID: userId,
+							},
+							{},
+						);
+					} else if (operation === 'listJitAdmin') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListJITAdmin',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'execJitAdmin') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						const jitAdminRole = this.getNodeParameter('jitAdminRole', i) as string;
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecJITAdmin',
+							{
+								tenantFilter,
+								ID: userId,
+								Role: jitAdminRole,
 							},
 							{},
 						);
@@ -829,6 +964,58 @@ export class Cipp implements INodeType {
 								user: userId,
 								ForwardTo: forwardTo,
 								KeepCopy: keepCopy,
+							},
+							{},
+						);
+					}
+				}
+
+				// ==================== QUARANTINE ====================
+				else if (resource === 'quarantine') {
+					const tenantFilter = getTenantFilter();
+
+					if (operation === 'getMany') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListMailQuarantine',
+							{},
+							{ tenantFilter },
+						);
+
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'release') {
+						const messageId = this.getNodeParameter('messageId', i) as string;
+						const allowSender = this.getNodeParameter('allowSender', i) as boolean;
+
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecQuarantineManagement',
+							{
+								tenantFilter,
+								ID: messageId,
+								Type: 'Release',
+								AllowSender: allowSender,
+							},
+							{},
+						);
+					} else if (operation === 'deny') {
+						const messageId = this.getNodeParameter('messageId', i) as string;
+
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecQuarantineManagement',
+							{
+								tenantFilter,
+								ID: messageId,
+								Type: 'Deny',
 							},
 							{},
 						);
@@ -1241,6 +1428,19 @@ export class Cipp implements INodeType {
 							},
 							{},
 						);
+					} else if (operation === 'addSitesBulk') {
+						const sitesConfig = this.getNodeParameter('sitesConfig', i) as string;
+
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/AddSiteBulk',
+							{
+								tenantFilter,
+								sites: JSON.parse(sitesConfig),
+							},
+							{},
+						);
 					}
 				}
 
@@ -1463,6 +1663,199 @@ export class Cipp implements INodeType {
 						if (graphOptions.count) qs['$count'] = graphOptions.count;
 
 						responseData = await cippApiRequest.call(this, 'GET', '/api/ListGraphRequest', {}, qs);
+					}
+				}
+
+				// ==================== IDENTITY ====================
+				else if (resource === 'identity') {
+					const tenantFilter = getTenantFilter();
+
+					if (operation === 'listAuditLogs') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListAuditLogs',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'listDeletedItems') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListDeletedItems',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'listRoles') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListRoles',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'restoreDeleted') {
+						const objectId = this.getNodeParameter('objectId', i) as string;
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecRestoreDeleted',
+							{
+								tenantFilter,
+								ID: objectId,
+							},
+							{},
+						);
+					}
+				}
+
+				// ==================== POLICY ====================
+				else if (resource === 'policy') {
+					const tenantFilter = getTenantFilter();
+
+					if (operation === 'getMany') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListIntunePolicy',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'add') {
+						const policyConfig = this.getNodeParameter('policyConfig', i) as string;
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/AddPolicy',
+							{
+								tenantFilter,
+								...JSON.parse(policyConfig),
+							},
+							{},
+						);
+					} else if (operation === 'assign') {
+						const policyId = this.getNodeParameter('policyId', i) as string;
+						const assignTo = this.getNodeParameter('assignTo', i) as string;
+						const body: IDataObject = {
+							tenantFilter,
+							ID: policyId,
+							AssignTo: assignTo,
+						};
+						if (assignTo === 'customGroup') {
+							body.customGroupNames = this.getNodeParameter('customGroupNames', i) as string;
+						}
+						responseData = await cippApiRequest.call(this, 'POST', '/api/AssignPolicy', body, {});
+					} else if (operation === 'remove') {
+						const policyId = this.getNodeParameter('policyId', i) as string;
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/RemovePolicy',
+							{
+								tenantFilter,
+								ID: policyId,
+							},
+							{},
+						);
+					} else if (operation === 'listDefenderTvm') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListDefenderTVM',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					}
+				}
+
+				// ==================== ONEDRIVE ====================
+				else if (resource === 'onedrive') {
+					const tenantFilter = getTenantFilter();
+					const userId = this.getNodeParameter('userId', i) as string;
+
+					if (operation === 'provision') {
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecOneDriveProvision',
+							{
+								tenantFilter,
+								UserPrincipalName: userId,
+							},
+							{},
+						);
+					} else if (operation === 'addShortcut') {
+						const shortcutUrl = this.getNodeParameter('shortcutUrl', i) as string;
+						const shortcutName = this.getNodeParameter('shortcutName', i, '') as string;
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecOneDriveShortCut',
+							{
+								tenantFilter,
+								UserPrincipalName: userId,
+								URL: shortcutUrl,
+								ShortcutName: shortcutName,
+							},
+							{},
+						);
+					}
+				}
+
+				// ==================== GDAP ====================
+				else if (resource === 'gdap') {
+					const tenantFilter = getTenantFilter();
+
+					if (operation === 'listRoles') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListGDAPRoles',
+							{},
+							{ tenantFilter },
+						);
+						if (Array.isArray(responseData) && !returnAll) {
+							const limit = this.getNodeParameter('limit', i) as number;
+							responseData = responseData.slice(0, limit);
+						}
+					} else if (operation === 'sendInvite') {
+						const gdapRoles = this.getNodeParameter('gdapRoles', i) as string;
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecGDAPInvite',
+							{
+								tenantFilter,
+								Roles: gdapRoles.split(',').map((r) => r.trim()),
+							},
+							{},
+						);
 					}
 				}
 
