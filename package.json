@@ -1,6 +1,6 @@
 {
   "name": "@joshuanode/n8n-nodes-cipp",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "n8n community node for CIPP.app - Microsoft 365 multi-tenant management",
   "license": "MIT",
   "keywords": [

@@ -246,6 +246,12 @@ export const autopilotOperations: INodeProperties[] = [
 				description: 'Sync Autopilot devices',
 				action: 'Sync autopilot devices',
 			},
+			{
+				name: 'Sync DEP',
+				value: 'syncDep',
+				description: 'Sync Apple Business Manager (DEP) devices to Intune (CIPP v10.1.0+)',
+				action: 'Sync DEP devices',
+			},
 		],
 		default: 'getAll',
 	},

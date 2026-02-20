@@ -973,6 +973,14 @@ export class Cipp implements INodeType {
 							{},
 							{ tenantFilter, type: configType },
 						);
+					} else if (operation === 'syncDep') {
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecSyncDEP',
+							{ tenantFilter },
+							{},
+						);
 					}
 				}
 

@@ -68,7 +68,7 @@ For detailed authentication setup, see the [CIPP API Documentation](https://docs
 | **User**           | Get Many, Add, Disable, Enable, Reset Password, Reset MFA, Revoke Sessions, Remove, Create TAP, Set Per-User MFA, Send MFA Push, Clear Immutable ID, Offboard |
 | **Group**          | Add, Edit Members, Delete, Hide from GAL, Set Delivery Management, Get Many                                                                                   |
 | **Device**         | Get Many, Manage, Execute Action, Get Recovery Key, Get LAPS Password                                                                                         |
-| **Autopilot**      | Get Many, Assign, Remove, Sync, Get Configurations                                                                                                            |
+| **Autopilot**      | Get Many, Assign, Remove, Sync, Sync DEP (ABM), Get Configurations                                                                                            |
 | **Mailbox**        | Convert, Enable Archive, Set Out of Office, Set Email Forwarding                                                                                              |
 | **Alert**          | Add, Get Many, Get Security Alerts, Get Security Incidents, Set Alert Status, Set Incident Status                                                             |
 | **Application**    | Get Many, Assign, Remove, Add WinGet/Store/Chocolatey/MSP/Office Apps                                                                                         |
