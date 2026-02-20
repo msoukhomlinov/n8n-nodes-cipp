@@ -21,6 +21,7 @@ import { mailboxFields, mailboxOperations } from './MailboxDescription';
 import { onedriveFields, onedriveOperations } from './OneDriveDescription';
 import { policyFields, policyOperations } from './PolicyDescription';
 import { quarantineFields, quarantineOperations } from './QuarantineDescription';
+import { shiftFields, shiftOperations } from './ShiftDescription';
 import { teamFields, teamOperations, voiceFields, voiceOperations } from './TeamDescription';
 import { tenantFields, tenantOperations } from './TenantDescription';
 import { userFields, userOperations } from './UserDescription';
@@ -39,6 +40,7 @@ export const operationFields = [
 	...policyOperations,
 	...quarantineOperations,
 	...scheduledItemOperations,
+	...shiftOperations,
 	...teamOperations,
 	...tenantOperations,
 	...toolsOperations,
@@ -60,6 +62,7 @@ export const resourceFields = [
 	...policyFields,
 	...quarantineFields,
 	...scheduledItemFields,
+	...shiftFields,
 	...teamFields,
 	...tenantFields,
 	...toolsFields,

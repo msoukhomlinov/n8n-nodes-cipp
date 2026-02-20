@@ -119,6 +119,11 @@ export class Cipp implements INodeType {
 						description: 'Manage Teams and SharePoint',
 					},
 					{
+						name: 'Teams Shift',
+						value: 'teamsShift',
+						description: 'Manage Teams Shifts schedule — shifts, open shifts, groups, time off',
+					},
+					{
 						name: 'Tenant',
 						value: 'tenant',
 						description: 'List and manage tenants',
@@ -1866,6 +1871,309 @@ export class Cipp implements INodeType {
 								{},
 							);
 						}
+					}
+				}
+
+				// ==================== TEAMS SHIFT ====================
+				else if (resource === 'teamsShift') {
+					const tenantFilter = getTenantFilter();
+					const teamId = this.getNodeParameter('teamId', i) as string;
+					const basePath = `teams/${teamId}/schedule`;
+
+					const graphExec = async (
+						method: string,
+						endpoint: string,
+						body?: IDataObject,
+					) => {
+						const payload: IDataObject = { tenantFilter, endpoint, method };
+						if (body && Object.keys(body).length > 0) {
+							payload.body = body;
+						}
+						return cippApiRequest.call(this, 'POST', '/api/ExecGraphRequest', payload, {});
+					};
+
+					const buildFilteredEndpoint = (base: string): string => {
+						const filters = this.getNodeParameter('listFilters', i, {}) as IDataObject;
+
+						// Raw OData filter takes priority
+						if (filters.rawFilter) {
+							return `${base}?$filter=${encodeURIComponent(filters.rawFilter as string)}`;
+						}
+
+						// Build from convenience date fields
+						const parts: string[] = [];
+						if (filters.startDate) {
+							const d = new Date(filters.startDate as string).toISOString();
+							parts.push(`sharedShift/startDateTime ge ${d}`);
+						}
+						if (filters.endDate) {
+							const d = new Date(filters.endDate as string).toISOString();
+							parts.push(`sharedShift/endDateTime le ${d}`);
+						}
+
+						if (parts.length > 0) {
+							return `${base}?$filter=${encodeURIComponent(parts.join(' and '))}`;
+						}
+						return base;
+					};
+
+					// ── Shifts ──
+					if (operation === 'listShifts') {
+						responseData = await graphExec('GET', buildFilteredEndpoint(`${basePath}/shifts`));
+					} else if (operation === 'createShift') {
+						const userId = this.getNodeParameter('userId', i) as string;
+						const startDateTime = this.getNodeParameter('startDateTime', i) as string;
+						const endDateTime = this.getNodeParameter('endDateTime', i) as string;
+						const options = this.getNodeParameter('shiftOptions', i, {}) as IDataObject;
+
+						const sharedShift: IDataObject = {
+							startDateTime,
+							endDateTime,
+						};
+						if (options.displayName) sharedShift.displayName = options.displayName;
+						if (options.notes) sharedShift.notes = options.notes;
+						if (options.theme) sharedShift.theme = options.theme;
+						if (options.activities) {
+							sharedShift.activities = JSON.parse(options.activities as string);
+						}
+
+						responseData = await graphExec('POST', `${basePath}/shifts`, {
+							userId,
+							sharedShift,
+						});
+					} else if (operation === 'updateShift') {
+						const shiftId = this.getNodeParameter('shiftId', i) as string;
+						const shiftData = parseJsonObjectPayload(
+							this.getNodeParameter('shiftUpdateData', i),
+							'Shift Data',
+							i,
+						);
+						responseData = await graphExec('PUT', `${basePath}/shifts/${shiftId}`, shiftData);
+					} else if (operation === 'deleteShift') {
+						const shiftId = this.getNodeParameter('shiftId', i) as string;
+						responseData = await graphExec('DELETE', `${basePath}/shifts/${shiftId}`);
+					}
+
+					// ── Open Shifts ──
+					else if (operation === 'listOpenShifts') {
+						responseData = await graphExec('GET', buildFilteredEndpoint(`${basePath}/openShifts`));
+					} else if (operation === 'createOpenShift') {
+						const schedulingGroupId = this.getNodeParameter('schedulingGroupId', i) as string;
+						const startDateTime = this.getNodeParameter('openShiftStart', i) as string;
+						const endDateTime = this.getNodeParameter('openShiftEnd', i) as string;
+						const openSlotCount = this.getNodeParameter('openSlotCount', i) as number;
+						const options = this.getNodeParameter('openShiftOptions', i, {}) as IDataObject;
+
+						const sharedOpenShift: IDataObject = {
+							startDateTime,
+							endDateTime,
+							openSlotCount,
+						};
+						if (options.displayName) sharedOpenShift.displayName = options.displayName;
+						if (options.notes) sharedOpenShift.notes = options.notes;
+						if (options.theme) sharedOpenShift.theme = options.theme;
+						if (options.activities) {
+							sharedOpenShift.activities = JSON.parse(options.activities as string);
+						}
+
+						responseData = await graphExec('POST', `${basePath}/openShifts`, {
+							schedulingGroupId,
+							sharedOpenShift,
+						});
+					} else if (operation === 'updateOpenShift') {
+						const openShiftId = this.getNodeParameter('openShiftId', i) as string;
+						const data = parseJsonObjectPayload(
+							this.getNodeParameter('openShiftUpdateData', i),
+							'Open Shift Data',
+							i,
+						);
+						responseData = await graphExec('PUT', `${basePath}/openShifts/${openShiftId}`, data);
+					} else if (operation === 'deleteOpenShift') {
+						const openShiftId = this.getNodeParameter('openShiftId', i) as string;
+						responseData = await graphExec('DELETE', `${basePath}/openShifts/${openShiftId}`);
+					}
+
+					// ── Scheduling Groups ──
+					else if (operation === 'listSchedulingGroups') {
+						responseData = await graphExec('GET', buildFilteredEndpoint(`${basePath}/schedulingGroups`));
+					} else if (operation === 'createSchedulingGroup') {
+						const displayName = this.getNodeParameter('groupDisplayName', i) as string;
+						const userIds = (this.getNodeParameter('groupUserIds', i) as string)
+							.split(',')
+							.map((id) => id.trim())
+							.filter((id) => id);
+						responseData = await graphExec('POST', `${basePath}/schedulingGroups`, {
+							displayName,
+							userIds,
+							isActive: true,
+						});
+					} else if (operation === 'updateSchedulingGroup') {
+						const groupId = this.getNodeParameter('schedulingGroupUpdateId', i) as string;
+						const data = parseJsonObjectPayload(
+							this.getNodeParameter('schedulingGroupUpdateData', i),
+							'Scheduling Group Data',
+							i,
+						);
+						responseData = await graphExec(
+							'PUT',
+							`${basePath}/schedulingGroups/${groupId}`,
+							data,
+						);
+					} else if (operation === 'deleteSchedulingGroup') {
+						const groupId = this.getNodeParameter('schedulingGroupUpdateId', i) as string;
+						responseData = await graphExec(
+							'PUT',
+							`${basePath}/schedulingGroups/${groupId}`,
+							{ isActive: false },
+						);
+					}
+
+					// ── Time Off Reasons ──
+					else if (operation === 'listTimeOffReasons') {
+						responseData = await graphExec('GET', buildFilteredEndpoint(`${basePath}/timeOffReasons`));
+					} else if (operation === 'createTimeOffReason') {
+						const displayName = this.getNodeParameter('reasonDisplayName', i) as string;
+						const iconType = this.getNodeParameter('iconType', i) as string;
+						responseData = await graphExec('POST', `${basePath}/timeOffReasons`, {
+							displayName,
+							iconType,
+							isActive: true,
+						});
+					} else if (operation === 'updateTimeOffReason') {
+						const reasonId = this.getNodeParameter('timeOffReasonId', i) as string;
+						const data = parseJsonObjectPayload(
+							this.getNodeParameter('timeOffReasonUpdateData', i),
+							'Time Off Reason Data',
+							i,
+						);
+						responseData = await graphExec(
+							'PUT',
+							`${basePath}/timeOffReasons/${reasonId}`,
+							data,
+						);
+					} else if (operation === 'deleteTimeOffReason') {
+						const reasonId = this.getNodeParameter('timeOffReasonId', i) as string;
+						responseData = await graphExec(
+							'PUT',
+							`${basePath}/timeOffReasons/${reasonId}`,
+							{ isActive: false },
+						);
+					}
+
+					// ── Time Off Requests ──
+					else if (operation === 'listTimeOffRequests') {
+						responseData = await graphExec('GET', buildFilteredEndpoint(`${basePath}/timeOffRequests`));
+					} else if (operation === 'createTimeOffRequest') {
+						const startDateTime = this.getNodeParameter('timeOffStart', i) as string;
+						const endDateTime = this.getNodeParameter('timeOffEnd', i) as string;
+						const timeOffReasonId = this.getNodeParameter(
+							'timeOffReasonIdForRequest',
+							i,
+						) as string;
+						responseData = await graphExec('POST', `${basePath}/timeOffRequests`, {
+							startDateTime,
+							endDateTime,
+							timeOffReasonId,
+						});
+					} else if (operation === 'approveTimeOffRequest') {
+						const requestId = this.getNodeParameter('timeOffRequestId', i) as string;
+						const message = this.getNodeParameter('approvalMessage', i, '') as string;
+						const body: IDataObject = {};
+						if (message) body.message = message;
+						responseData = await graphExec(
+							'POST',
+							`${basePath}/timeOffRequests/${requestId}/approve`,
+							body,
+						);
+					} else if (operation === 'declineTimeOffRequest') {
+						const requestId = this.getNodeParameter('timeOffRequestId', i) as string;
+						const message = this.getNodeParameter('approvalMessage', i, '') as string;
+						const body: IDataObject = {};
+						if (message) body.message = message;
+						responseData = await graphExec(
+							'POST',
+							`${basePath}/timeOffRequests/${requestId}/decline`,
+							body,
+						);
+					}
+
+					// ── Swap Shift Requests ──
+					else if (operation === 'listSwapShiftRequests') {
+						responseData = await graphExec('GET', buildFilteredEndpoint(`${basePath}/swapShiftsChangeRequests`));
+					} else if (operation === 'createSwapShiftRequest') {
+						const senderShiftId = this.getNodeParameter('senderShiftId', i) as string;
+						const recipientShiftId = this.getNodeParameter('recipientShiftId', i) as string;
+						const recipientUserId = this.getNodeParameter(
+							'swapRecipientUserId',
+							i,
+						) as string;
+						responseData = await graphExec(
+							'POST',
+							`${basePath}/swapShiftsChangeRequests`,
+							{
+								senderShiftId,
+								recipientShiftId,
+								recipientUserId,
+							},
+						);
+					} else if (operation === 'approveSwapShiftRequest') {
+						const requestId = this.getNodeParameter('swapShiftRequestId', i) as string;
+						const message = this.getNodeParameter('approvalMessage', i, '') as string;
+						const body: IDataObject = {};
+						if (message) body.message = message;
+						responseData = await graphExec(
+							'POST',
+							`${basePath}/swapShiftsChangeRequests/${requestId}/approve`,
+							body,
+						);
+					} else if (operation === 'declineSwapShiftRequest') {
+						const requestId = this.getNodeParameter('swapShiftRequestId', i) as string;
+						const message = this.getNodeParameter('approvalMessage', i, '') as string;
+						const body: IDataObject = {};
+						if (message) body.message = message;
+						responseData = await graphExec(
+							'POST',
+							`${basePath}/swapShiftsChangeRequests/${requestId}/decline`,
+							body,
+						);
+					}
+
+					// ── Offer Shift Requests ──
+					else if (operation === 'listOfferShiftRequests') {
+						responseData = await graphExec('GET', buildFilteredEndpoint(`${basePath}/offerShiftRequests`));
+					} else if (operation === 'createOfferShiftRequest') {
+						const senderShiftId = this.getNodeParameter(
+							'offerSenderShiftId',
+							i,
+						) as string;
+						const recipientUserId = this.getNodeParameter(
+							'offerRecipientUserId',
+							i,
+						) as string;
+						responseData = await graphExec('POST', `${basePath}/offerShiftRequests`, {
+							senderShiftId,
+							recipientUserId,
+						});
+					} else if (operation === 'approveOfferShiftRequest') {
+						const requestId = this.getNodeParameter('offerShiftRequestId', i) as string;
+						const message = this.getNodeParameter('approvalMessage', i, '') as string;
+						const body: IDataObject = {};
+						if (message) body.message = message;
+						responseData = await graphExec(
+							'POST',
+							`${basePath}/offerShiftRequests/${requestId}/approve`,
+							body,
+						);
+					} else if (operation === 'declineOfferShiftRequest') {
+						const requestId = this.getNodeParameter('offerShiftRequestId', i) as string;
+						const message = this.getNodeParameter('approvalMessage', i, '') as string;
+						const body: IDataObject = {};
+						if (message) body.message = message;
+						responseData = await graphExec(
+							'POST',
+							`${basePath}/offerShiftRequests/${requestId}/decline`,
+							body,
+						);
 					}
 				}
 

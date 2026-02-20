@@ -19,9 +19,9 @@ This node provides full integration with the CIPP API, enabling automation of:
 - **Identity Management** - Users, groups, MFA, devices
 - **Tenant Administration** - Alerts, licenses, standards
 - **Intune** - Applications, Autopilot, device actions
-- **Teams & SharePoint** - Teams, sites, voice numbers
+- **Teams & SharePoint** - Teams, sites, voice numbers, shifts scheduling
 - **Security & Compliance** - Defender alerts, incidents
-- **Tools** - Breach search, Graph API requests
+- **Tools** - Breach search, Graph API requests, ExecGraphRequest
 - **CIPP System** - Scheduled jobs, backups
 
 ### User-Friendly Design
@@ -66,17 +66,18 @@ For detailed authentication setup, see the [CIPP API Documentation](https://docs
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Tenant**         | Get Many, Get Licenses, Get CSP Licenses, CSP License Action, Clear Cache                                                                                     |
 | **User**           | Get Many, Add, Disable, Enable, Reset Password, Reset MFA, Revoke Sessions, Remove, Create TAP, Set Per-User MFA, Send MFA Push, Clear Immutable ID, Offboard |
-| **Group**          | Add, Edit Members, Delete, Hide from GAL, Set Delivery Management, Get Many                                                                         |
-| **Device**         | Get Many, Manage, Execute Action, Get Recovery Key, Get LAPS Password                                                                               |
-| **Autopilot**      | Get Many, Assign, Remove, Sync, Get Configurations                                                                                                  |
-| **Mailbox**        | Convert, Enable Archive, Set Out of Office, Set Email Forwarding                                                                                    |
-| **Alert**          | Add, Get Many, Get Security Alerts, Get Security Incidents, Set Alert Status, Set Incident Status                                                   |
-| **Application**    | Get Many, Assign, Remove, Add WinGet/Store/Chocolatey/MSP/Office Apps                                                                               |
-| **Team**           | Add, Get Many, Get Sites, Get Activity, Manage Site Members/Permissions                                                                             |
-| **Voice**          | Get Phone Numbers, Get Locations, Assign/Unassign Numbers                                                                                           |
-| **Scheduled Item** | Add, Get Many, Remove                                                                                                                               |
-| **Backup**         | Get Many, Run, Restore, Set Auto-Backup                                                                                                             |
-| **Tools**          | Breach Search (Account/Tenant), Graph Request (List), Graph Request (Exec)                                                                       |
+| **Group**          | Add, Edit Members, Delete, Hide from GAL, Set Delivery Management, Get Many                                                                                   |
+| **Device**         | Get Many, Manage, Execute Action, Get Recovery Key, Get LAPS Password                                                                                         |
+| **Autopilot**      | Get Many, Assign, Remove, Sync, Get Configurations                                                                                                            |
+| **Mailbox**        | Convert, Enable Archive, Set Out of Office, Set Email Forwarding                                                                                              |
+| **Alert**          | Add, Get Many, Get Security Alerts, Get Security Incidents, Set Alert Status, Set Incident Status                                                             |
+| **Application**    | Get Many, Assign, Remove, Add WinGet/Store/Chocolatey/MSP/Office Apps                                                                                         |
+| **Team**           | Add, Get Many, Get Sites, Get Activity, Manage Site Members/Permissions                                                                                       |
+| **Teams Shift**    | List/Create/Update/Delete Shifts, Open Shifts, Scheduling Groups, Time Off Reasons; List/Create/Approve/Decline Time Off, Swap Shift & Offer Shift Requests   |
+| **Voice**          | Get Phone Numbers, Get Locations, Assign/Unassign Numbers                                                                                                     |
+| **Scheduled Item** | Add, Get Many, Remove                                                                                                                                         |
+| **Backup**         | Get Many, Run, Restore, Set Auto-Backup                                                                                                                       |
+| **Tools**          | Breach Search (Account/Tenant), Exec Graph Request, Graph Request (List), Graph Request (Exec)                                                                |
 
 ## Example Usage
 
@@ -130,7 +131,34 @@ $select: id,displayName,userPrincipalName
 $filter: startsWith(displayName,'John')
 ```
 
-### Teams Shifts Graph Exec Request (POST/PATCH/GET)
+### Teams Shifts (Dedicated Resource)
+
+```
+Resource: Teams Shift
+Operation: List Shifts
+Tenant: Select from dropdown
+Team ID: <team-guid>
+Filters → Start Date: 2024-03-01T00:00:00Z
+Filters → End Date: 2024-03-31T23:59:59Z
+```
+
+```
+Resource: Teams Shift
+Operation: Create Shift
+Tenant: Select from dropdown
+Team ID: <team-guid>
+User ID: <aad-user-id>
+Start Date Time: 2024-03-15T08:00:00Z
+End Date Time: 2024-03-15T16:00:00Z
+Options → Display Name: Morning Shift
+Options → Theme: blue
+```
+
+> ⚠️ **CIPP-API Requirement**: The Teams Shift resource and the Exec Graph Request tool both use `POST /api/ExecGraphRequest`, which is **not part of the standard CIPP API**. You must be running a custom fork of [CIPP-API](https://github.com/KelvinTegelaar/CIPP-API) that exposes the `ExecGraphRequest` endpoint. Without this, all Teams Shift operations and the Exec Graph Request tool will return a 404 or 400 error.
+>
+> If your fork uses a different route name (e.g., `/api/GraphRequest`), the `Graph Request (Exec)` tool has a built-in fallback. The dedicated Teams Shift resource does not — it expects `/api/ExecGraphRequest` to exist.
+
+### Graph Request (Exec) — Raw Graph Calls
 
 ```
 Resource: Tools
@@ -142,6 +170,7 @@ Body: {"userId":"<aad-user-id>","schedulingGroupId":"<group-id>","sharedShift":{
 ```
 
 Notes:
+
 - `Graph Request (Exec)` sends a `POST` to `/api/ExecGraphRequest` and falls back to `/api/GraphRequest` if your fork uses that route name.
 - By default, client-side validation requires endpoints matching `teams/{id}/schedule/*` (can be disabled in `Exec Options`).
 
