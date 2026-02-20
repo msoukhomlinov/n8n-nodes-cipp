@@ -76,7 +76,7 @@ For detailed authentication setup, see the [CIPP API Documentation](https://docs
 | **Voice**          | Get Phone Numbers, Get Locations, Assign/Unassign Numbers                                                                                           |
 | **Scheduled Item** | Add, Get Many, Remove                                                                                                                               |
 | **Backup**         | Get Many, Run, Restore, Set Auto-Backup                                                                                                             |
-| **Tools**          | Breach Search (Account/Tenant), Graph Request                                                                                                       |
+| **Tools**          | Breach Search (Account/Tenant), Graph Request (List), Graph Request (Exec)                                                                       |
 
 ## Example Usage
 
@@ -123,12 +123,27 @@ Action: SyncDevice
 
 ```
 Resource: Tools
-Operation: Graph Request
+Operation: Graph Request (List)
 Tenant: Select from dropdown
 Endpoint: users
 $select: id,displayName,userPrincipalName
 $filter: startsWith(displayName,'John')
 ```
+
+### Teams Shifts Graph Exec Request (POST/PATCH/GET)
+
+```
+Resource: Tools
+Operation: Graph Request (Exec)
+Tenant: Select from dropdown
+Endpoint: teams/<team-id>/schedule/shifts
+Method: POST
+Body: {"userId":"<aad-user-id>","schedulingGroupId":"<group-id>","sharedShift":{...}}
+```
+
+Notes:
+- `Graph Request (Exec)` sends a `POST` to `/api/ExecGraphRequest` and falls back to `/api/GraphRequest` if your fork uses that route name.
+- By default, client-side validation requires endpoints matching `teams/{id}/schedule/*` (can be disabled in `Exec Options`).
 
 ## Development
 

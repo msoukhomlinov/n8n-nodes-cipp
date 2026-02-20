@@ -25,6 +25,12 @@ export const quarantineOperations: INodeProperties[] = [
 				action: 'List quarantined messages',
 			},
 			{
+				name: 'Get Message',
+				value: 'getMessage',
+				description: 'Get the body content of a quarantined message',
+				action: 'Get quarantined message body',
+			},
+			{
 				name: 'Release',
 				value: 'release',
 				description: 'Release a quarantined message for delivery',
@@ -77,7 +83,7 @@ export const quarantineFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['quarantine'],
-				operation: ['release', 'deny'],
+				operation: ['release', 'deny', 'getMessage'],
 			},
 		},
 		default: '',

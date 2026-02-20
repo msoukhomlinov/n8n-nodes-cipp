@@ -10,6 +10,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 import {
 	cippApiRequest,
@@ -239,6 +240,68 @@ export class Cipp implements INodeType {
 
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const operation = this.getNodeParameter('operation', 0) as string;
+		const normalizeGraphEndpoint = (endpoint: string): string =>
+			endpoint
+				.trim()
+				.replace(/^https?:\/\/graph\.microsoft\.com\/(?:v1\.0|beta)\//i, '')
+				.replace(/^(?:v1\.0|beta)\//i, '')
+				.replace(/^\/+/, '');
+		const parseJsonPayload = (
+			value: unknown,
+			fieldName: string,
+			itemIndex: number,
+		): IDataObject | IDataObject[] => {
+			if (value === undefined || value === null || value === '') {
+				return {};
+			}
+
+			if (typeof value === 'string') {
+				try {
+					const parsed = JSON.parse(value) as unknown;
+
+					if (Array.isArray(parsed) || (parsed !== null && typeof parsed === 'object')) {
+						return parsed as IDataObject | IDataObject[];
+					}
+				} catch (error) {
+					void error;
+				}
+
+				throw new NodeOperationError(
+					this.getNode(),
+					`${fieldName} must be valid JSON (object or array).`,
+					{ itemIndex },
+				);
+			}
+
+			if (Array.isArray(value) || (value !== null && typeof value === 'object')) {
+				return value as IDataObject | IDataObject[];
+			}
+
+			throw new NodeOperationError(
+				this.getNode(),
+				`${fieldName} must be a JSON object or array.`,
+				{ itemIndex },
+			);
+		};
+		const parseJsonObjectPayload = (
+			value: unknown,
+			fieldName: string,
+			itemIndex: number,
+		): IDataObject => {
+			const parsed = parseJsonPayload(value, fieldName, itemIndex);
+
+			if (Array.isArray(parsed)) {
+				throw new NodeOperationError(this.getNode(), `${fieldName} must be a JSON object.`, {
+					itemIndex,
+				});
+			}
+
+			return parsed;
+		};
+		const hasPayloadContent = (payload: IDataObject | IDataObject[]): boolean =>
+			Array.isArray(payload) ? payload.length > 0 : Object.keys(payload).length > 0;
+		const isTeamsScheduleEndpoint = (endpoint: string): boolean =>
+			/^teams\/[^/]+\/schedule(?:\/.*)?$/i.test(endpoint);
 
 		for (let i = 0; i < items.length; i++) {
 			try {
@@ -1019,6 +1082,19 @@ export class Cipp implements INodeType {
 							},
 							{},
 						);
+					} else if (operation === 'getMessage') {
+						const messageId = this.getNodeParameter('messageId', i) as string;
+
+						responseData = await cippApiRequest.call(
+							this,
+							'GET',
+							'/api/ListMailQuarantineMessage',
+							{},
+							{
+								tenantFilter,
+								Identity: messageId,
+							},
+						);
 					}
 				}
 
@@ -1663,6 +1739,133 @@ export class Cipp implements INodeType {
 						if (graphOptions.count) qs['$count'] = graphOptions.count;
 
 						responseData = await cippApiRequest.call(this, 'GET', '/api/ListGraphRequest', {}, qs);
+					} else if (operation === 'execGraphRequest') {
+						const tenantFilter = getTenantFilter();
+						const rawEndpoint = this.getNodeParameter('execEndpoint', i) as string;
+						const endpoint = normalizeGraphEndpoint(rawEndpoint);
+						const method = this.getNodeParameter('execMethod', i) as string;
+
+						const payload: IDataObject = { tenantFilter, endpoint, method };
+
+						if (method === 'POST' || method === 'PATCH') {
+							const body = parseJsonPayload(
+								this.getNodeParameter('execBody', i, '{}'),
+								'Body',
+								i,
+							);
+							if (hasPayloadContent(body)) {
+								payload.body = body;
+							}
+						}
+
+						responseData = await cippApiRequest.call(
+							this,
+							'POST',
+							'/api/ExecGraphRequest',
+							payload,
+							{},
+						);
+					} else if (operation === 'graphRequestExec') {
+						const tenantFilter = getTenantFilter();
+						const rawEndpoint = this.getNodeParameter('graphExecEndpoint', i) as string;
+						const method = this.getNodeParameter('graphExecMethod', i) as 'GET' | 'POST' | 'PATCH';
+						const graphExecOptions = this.getNodeParameter(
+							'graphExecOptions',
+							i,
+							{},
+						) as IDataObject;
+
+						const endpoint = normalizeGraphEndpoint(rawEndpoint);
+						if (!endpoint) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Endpoint is required for Graph Request (Exec).',
+								{ itemIndex: i },
+							);
+						}
+
+						const enforceShiftsAllowlist = graphExecOptions.enforceShiftsAllowlist !== false;
+						if (enforceShiftsAllowlist && !isTeamsScheduleEndpoint(endpoint)) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Endpoint blocked by client-side allowlist. Expected teams/{ID}/schedule/*.',
+								{ itemIndex: i },
+							);
+						}
+
+						const headers = parseJsonObjectPayload(
+							this.getNodeParameter('graphExecHeaders', i, '{}'),
+							'Headers',
+							i,
+						);
+						const payload: IDataObject = {
+							tenantFilter,
+							endpoint,
+							method,
+						};
+
+						if (Object.keys(headers).length > 0) {
+							payload.headers = headers;
+						}
+
+						if (method !== 'GET') {
+							const body = parseJsonPayload(
+								this.getNodeParameter('graphExecBody', i, '{}'),
+								'Body',
+								i,
+							);
+
+							if (hasPayloadContent(body)) {
+								payload.body = body;
+							}
+						}
+
+						const maxPayloadBytes = Number(graphExecOptions.maxPayloadBytes ?? 262144);
+						if (!Number.isFinite(maxPayloadBytes) || maxPayloadBytes <= 0) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Max Payload Bytes must be a positive number.',
+								{ itemIndex: i },
+							);
+						}
+
+						const payloadBytes = new TextEncoder().encode(JSON.stringify(payload)).length;
+						if (payloadBytes > maxPayloadBytes) {
+							throw new NodeOperationError(
+								this.getNode(),
+								`Payload is ${payloadBytes} bytes, which exceeds Max Payload Bytes (${maxPayloadBytes}).`,
+								{ itemIndex: i },
+							);
+						}
+
+						try {
+							responseData = await cippApiRequest.call(
+								this,
+								'POST',
+								'/api/ExecGraphRequest',
+								payload,
+								{},
+							);
+						} catch (error) {
+							const err = error as { message?: string; description?: string };
+							const message = (err.message || '').toLowerCase();
+							const description = (err.description || '').toLowerCase();
+							const endpointMissing =
+								message.includes('resource not found') || description.includes('not found');
+
+							// Support alternate naming in forks that expose /api/GraphRequest
+							if (!endpointMissing) {
+								throw error;
+							}
+
+							responseData = await cippApiRequest.call(
+								this,
+								'POST',
+								'/api/GraphRequest',
+								payload,
+								{},
+							);
+						}
 					}
 				}
 

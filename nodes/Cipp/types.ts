@@ -37,6 +37,14 @@ export interface IGraphRequestParams {
 	ReverseTenantLookup?: boolean;
 }
 
+export interface IGraphExecRequestParams {
+	tenantFilter: string;
+	endpoint: string;
+	method: 'GET' | 'POST' | 'PATCH';
+	headers?: Record<string, string>;
+	body?: unknown;
+}
+
 export interface IUserCreateParams {
 	tenantFilter: string;
 	firstName: string;

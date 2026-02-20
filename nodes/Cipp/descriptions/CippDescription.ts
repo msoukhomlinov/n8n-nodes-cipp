@@ -410,10 +410,22 @@ export const toolsOperations: INodeProperties[] = [
 				action: 'Execute breach search',
 			},
 			{
-				name: 'Graph Request',
-				value: 'graphRequest',
-				description: 'Make a custom Microsoft Graph API request',
+				name: 'Exec Graph Request',
+				value: 'execGraphRequest',
+				description: 'Execute a Microsoft Graph request via POST /api/ExecGraphRequest',
+				action: 'Exec graph request',
+			},
+			{
+				name: 'Graph Request (Exec)',
+				value: 'graphRequestExec',
+				description: 'Execute Microsoft Graph GET/POST/PATCH requests via your CIPP fork',
 				action: 'Execute graph request',
+			},
+			{
+				name: 'Graph Request (List)',
+				value: 'graphRequest',
+				description: 'Make a custom Microsoft Graph GET/list request',
+				action: 'Execute graph list request',
 			},
 		],
 		default: 'graphRequest',
@@ -432,7 +444,13 @@ export const toolsFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['tools'],
-				operation: ['breachTenant', 'executeBreachSearch', 'graphRequest'],
+				operation: [
+					'breachTenant',
+					'executeBreachSearch',
+					'execGraphRequest',
+					'graphRequest',
+					'graphRequestExec',
+				],
 			},
 		},
 		modes: [
@@ -537,6 +555,162 @@ export const toolsFields: INodeProperties[] = [
 				type: 'number',
 				default: 100,
 				description: 'Number of records to return',
+			},
+		],
+	},
+	// Exec Graph Request fields
+	{
+		displayName: 'Endpoint',
+		name: 'execEndpoint',
+		type: 'string',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['execGraphRequest'],
+			},
+		},
+		default: '',
+		placeholder: 'e.g. users, groups, devices',
+		description: 'The Graph API endpoint to call',
+	},
+	{
+		displayName: 'Method',
+		name: 'execMethod',
+		type: 'options',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['execGraphRequest'],
+			},
+		},
+		options: [
+			{ name: 'GET', value: 'GET' },
+			{ name: 'PATCH', value: 'PATCH' },
+			{ name: 'POST', value: 'POST' },
+			{ name: 'DELETE', value: 'DELETE' },
+		],
+		default: 'GET',
+		description: 'HTTP method for the Graph request',
+	},
+	{
+		displayName: 'Body',
+		name: 'execBody',
+		type: 'json',
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['execGraphRequest'],
+				execMethod: ['POST', 'PATCH'],
+			},
+		},
+		default: '{}',
+		description: 'Request body as JSON',
+	},
+
+	// Graph Request (Exec) fields — Teams Shifts focused
+	{
+		displayName: 'Endpoint',
+		name: 'graphExecEndpoint',
+		type: 'string',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['graphRequestExec'],
+			},
+		},
+		default: 'teams/{team-ID}/schedule/shifts',
+		placeholder: 'e.g. teams/{team-ID}/schedule/shifts',
+		description:
+			'Graph endpoint path to execute (relative path preferred, such as teams/{team-ID}/schedule/shifts)',
+	},
+	{
+		displayName: 'Method',
+		name: 'graphExecMethod',
+		type: 'options',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['graphRequestExec'],
+			},
+		},
+		options: [
+			{
+				name: 'GET',
+				value: 'GET',
+			},
+			{
+				name: 'PATCH',
+				value: 'PATCH',
+			},
+			{
+				name: 'POST',
+				value: 'POST',
+			},
+		],
+		default: 'GET',
+		description: 'HTTP method for the Graph request',
+	},
+	{
+		displayName: 'Headers',
+		name: 'graphExecHeaders',
+		type: 'json',
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['graphRequestExec'],
+			},
+		},
+		default: '{}',
+		description: 'Optional Graph request headers as a JSON object',
+	},
+	{
+		displayName: 'Body',
+		name: 'graphExecBody',
+		type: 'json',
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['graphRequestExec'],
+				graphExecMethod: ['POST', 'PATCH'],
+			},
+		},
+		default: '{}',
+		description: 'Graph request body as JSON',
+	},
+	{
+		displayName: 'Exec Options',
+		name: 'graphExecOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['tools'],
+				operation: ['graphRequestExec'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Enforce Teams Shifts Endpoint Pattern',
+				name: 'enforceShiftsAllowlist',
+				type: 'boolean',
+				default: true,
+				description: 'Whether to require an endpoint matching teams/{ID}/schedule/* before sending',
+			},
+			{
+				displayName: 'Max Payload Bytes',
+				name: 'maxPayloadBytes',
+				type: 'number',
+				typeOptions: {
+					minValue: 1024,
+					maxValue: 1048576,
+				},
+				default: 262144,
+				description: 'Maximum serialized payload size in bytes sent to CIPP',
 			},
 		],
 	},
