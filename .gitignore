@@ -38,3 +38,12 @@ coverage/
 *.bak
 *.tmp
 .cache/
+
+# AI / Cursor / docs configs (managed by private repo)
+/.claude
+/.cursor*
+/docs
+/CLAUDE.md
+/AGENT.md
+/.agent*
+/.private-git
